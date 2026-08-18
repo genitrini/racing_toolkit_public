@@ -243,6 +243,10 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
             gas = dataturn['gas'].to_numpy()
             curv2 = dataturn['curv2'].to_numpy()
 
+            direction = 'R' if data.loc[apex_lap[turn - 1], 'curvature'] < 0 else 'L'
+            if direction == 'R':  # I want peak in the direction of curvature --> wind! positive peaks if wind towards left
+                curv2 *= -1
+
             if np.any(brake != 0): # brake present
 
                 brake_start = idx[np.argmax(brake > 0)]
@@ -295,6 +299,11 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
             idx = dataturn.index
             curv = dataturn['curvature'].to_numpy()
             curv2 = dataturn['curv2'].to_numpy()
+
+            direction = 'R' if data.loc[apex_lap[turn - 1], 'curvature'] < 0 else 'L'
+            if direction == 'R':  # I want peak in the direction of curvature --> wind! positive peaks if wind towards left
+                curv2 *= -1
+
             zero_crossing = np.where(np.diff(np.signbit(curv)))[0][0]
             peaks, _ = find_peaks(curv2)
             valid = peaks[peaks > zero_crossing]
