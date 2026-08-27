@@ -68,7 +68,7 @@ dfall.to_pickle("edges_ideal_pkl/df_all_edges.pkl")
 # get ideal lap
 #dfid = pd.DataFrame(columns = ['track', 'perc_time', 'perc_space', 'x', 'y', 'z', 'curvature']) # solo 1 volta
 #dfid.to_pickle('edges_ideal_pkl/df_all_ideal.pkl')
-
+"""
 dfid = pd.read_pickle('edges_ideal_pkl/df_all_ideal.pkl')
 matplotlib.use('TkAgg')
 fs = 240
@@ -130,6 +130,7 @@ else:
 dfid.to_pickle('edges_ideal_pkl/df_all_ideal.pkl')
 
 print('done')
+"""
 #####################################################################
 #compute apex entry exit clip i ideal lap
 """
@@ -190,35 +191,37 @@ df['end'] = df.end.astype(float)
 df.to_pickle('df_turns.pkl')
 """
 
-track_name = 'okayama'
+track_name = 'brandshatch'
 edges = pd.read_pickle('edges_ideal_pkl/df_all_edges.pkl')
 df_id = pd.read_pickle('edges_ideal_pkl/df_all_ideal.pkl')
 
+
 plt.figure()
-plt.plot(edges.x[(edges.track == track_name) & (edges.edge == 'outer')],
-         edges.z[(edges.track == track_name) & (edges.edge == 'outer')])
-plt.plot(edges.x[(edges.track == track_name) & (edges.edge == 'inner')],
-         edges.z[(edges.track == track_name) & (edges.edge == 'inner')])
+for edge in ['outer', 'inner']:
+
+    plt.plot(edges.x[(edges.track == track_name) & (edges.edge == edge)],
+             edges.z[(edges.track == track_name) & (edges.edge == edge)])
 
 plt.plot(df_id.x[df_id.track == track_name], df_id.z[df_id.track == track_name])
-for i in np.arange(10):
-    plt.plot(edges.x[(edges.perc_space == i*10) & (edges.track == track_name) & (edges.edge == 'outer')],
-    edges.z[(edges.perc_space == i*10) & (edges.track == track_name) & (edges.edge == 'outer')], marker='o', markersize = 10, color = 'black')
+plt.xlabel('X coordinate', fontsize = 35)
+plt.ylabel('Z coordinate', fontsize = 35)
+plt.title(track_name, fontsize = 45)
 
-    plt.plot(edges.x[(edges.perc_space == i*10) & (edges.track == track_name) & (edges.edge == 'inner')],
-    edges.z[(edges.perc_space == i*10) & (edges.track == track_name) & (edges.edge == 'inner')], marker='o', markersize = 10, color = 'black')
+track = edges[edges.track == track_name]
+
+for edge in ['outer', 'inner']:
+    data = track[track.edge == edge]
+    data_100 = data[data.perc_space % 1 == 0]
+    plt.plot(data_100.x, data_100.z, 'o', markersize=3, color='grey', label='1% track length' if edge == 'inner' else None)
+    data_10 = data[data.perc_space % 10 == 0]
+    plt.plot(data_10.x, data_10.z, 'o', markersize=10, color='black', label='10% track length' if edge == 'inner' else None)
+    data_0 = data[data.perc_space == 0]
+    plt.plot(data_0.x, data_0.z, 'o', markersize=10, color='red', label = 'Lap start' if edge == 'inner' else None)
 
 
 
-
-for i in np.arange(100):
-    plt.plot(edges.x[(edges.perc_space == i) & (edges.track == track_name) & (edges.edge == 'outer')],
-    edges.z[(edges.perc_space == i) & (edges.track == track_name) & (edges.edge == 'outer')], marker='o', markersize = 3, color = 'grey')
-
-    plt.plot(edges.x[(edges.perc_space == i) & (edges.track == track_name) & (edges.edge == 'inner')],
-             edges.z[(edges.perc_space == i) & (edges.track == track_name) & (edges.edge == 'inner')], marker='o',
-             markersize=3, color='grey')
-
+plt.tick_params(axis='both', labelsize=25)
+plt.legend(fontsize=30)
 plt.show()
 
 

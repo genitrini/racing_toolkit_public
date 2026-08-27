@@ -4,7 +4,7 @@ import os
 from utilities import *
 
 
-files_loc = "E:/backups matteo/06_2026_ufficio/Documents/projects/LSU/racing/data_pkl"
+files_loc = "C:/Users/genitrini/Documents/projects/LSU/racing/data_pkl"
 all_files = os.listdir(files_loc)
 
 fs = 240
@@ -147,4 +147,23 @@ for lap in df.lap.unique():
     plt.plot(df.x[df.lap == lap], df.z[df.lap == lap])
     plt.plot(track.inner[:, 0], track.inner[:, 1])
     plt.plot(track.outer[:, 0], track.outer[:, 1])
+plt.show()
+
+
+
+# figure with curvature example
+
+data = df[df.lap == 1]
+fig, ax1 = plt.subplots()
+ax1.plot(data.perc_space, data.curv2, label='Car curvature "acceleration"', linewidth = 2.5)
+#ax2 = ax1.twinx()
+#ax2.plot(data.perc_space, data.curv2, label='Car curvature "acceleration"', color = 'k')
+x_values = [7.5,20, 25, 36, 42,49, 57,68, 65,85]
+for x_val in x_values:
+    ax1.axvline(x_val, linestyle='--' if x_val % 2 == 0 else '-', color='grey', label='Turn start' if x_val == x_values[0] else ('Turn end' if x_val == x_values[1] else None), linewidth = 2.5)
+ax1.legend(fontsize = 30)
+plt.tick_params(axis='both', labelsize=25)
+plt.title('Example of car curvature "acceleration" in a driven lap', fontsize = 40)
+plt.xlabel('Lap completion [%]', fontsize = 35)
+plt.ylabel('Curvature [1/m$s^2$]', fontsize = 35)
 plt.show()
