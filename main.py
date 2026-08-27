@@ -167,3 +167,4 @@ plt.title('Example of car curvature "acceleration" in a driven lap', fontsize = 
 plt.xlabel('Lap completion [%]', fontsize = 35)
 plt.ylabel('Curvature [1/m$s^2$]', fontsize = 35)
 plt.show()
+.
