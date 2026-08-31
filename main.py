@@ -4,7 +4,7 @@ import os
 from utilities import *
 
 
-files_loc = "C:/Users/genitrini/Documents/projects/LSU/racing/data_pkl"
+files_loc = "C:/Users/its/Documents/racing/data_pkl"
 all_files = os.listdir(files_loc)
 
 fs = 240
@@ -18,7 +18,7 @@ edges_bh = pd.read_pickle("edges_brandshatch.pkl")
 df_turns = pd.read_pickle("df_turns.pkl")
 dfallsubj = pd.read_pickle("df_allpoints.pkl")
 
-id = 959 #227 beginner
+id = 227 #227 beginner
 overwrite = False
 tracks = {}
 
@@ -57,8 +57,8 @@ for file in files:
     level = parts[2]
     track_name = "brandshatch" if parts[3] == "easy" else "okayama"
 
-    if track_name != 'okayama':
-        continue
+    #if track_name != 'okayama':
+        #continue
 
     session = int(parts[5])
     block = int(parts[7])
@@ -78,10 +78,14 @@ for file in files:
     df = perc_completion_norm(data, normlen, quantities, speed_threshold, cfg["track"], fs)
     df_real = entry_apex_clip_exit(df, cfg, nturns, fs)
     df_real = df_real.sort_values(["lap", "turn", "quantity"]).reset_index(drop = True)
+    points = df[["x", "z"]].iloc[df_real.value.to_numpy()]
+    _, idx = cfg['track'].tree.query(points)
+    df_real['midline_value'] = idx
+
     approved = input(f"{file}: data quality satisfactory? y/n: ")
 
-    if approved != "y":
-        break
+    #if approved != "y":
+        #break
 
     df_real.insert(0, "subject", id)
     df_real.insert(1, "level", level)
@@ -90,6 +94,8 @@ for file in files:
     df_real.insert(4, "block", block)
 
     dfs.append(df_real)
+
+
 
 if dfs:
 
@@ -105,7 +111,7 @@ if dfs:
 ######################################################
 ####### plots
 
-
+"""
 df_real = df_real.sort_values(by=['lap', 'turn', 'quantity']).reset_index(drop = True)
 df_ideal = df_ideal.sort_values(by=['lap', 'turn', 'quantity']).reset_index(drop = True)
 dfdelta = pd.DataFrame(columns = ['lap', 'turn', 'quantity', 'perc'])
@@ -120,19 +126,22 @@ plt.figure()
 sns.boxplot(data = dfdelta, x = 'turn', y = 'perc', hue = 'quantity')
 plt.show()
 
+"""
 
 
 
 
-
+"""
 for lap in df.lap.unique():
     plt.figure()
     plt.plot(df['curvature'][df.lap ==lap])
     #plt.figure()
     #plt.plot(df['x'][df.lap ==lap], df['z'][df.lap ==lap])
 plt.show()
+"""
 
 
+"""
 for lap in df.lap.unique():
 
     fig, ax1 = plt.subplots()
@@ -149,7 +158,8 @@ for lap in df.lap.unique():
     plt.plot(track.outer[:, 0], track.outer[:, 1])
 plt.show()
 
-
+"""
+"""
 
 # figure with curvature example
 
@@ -167,4 +177,5 @@ plt.title('Example of car curvature "acceleration" in a driven lap', fontsize = 
 plt.xlabel('Lap completion [%]', fontsize = 35)
 plt.ylabel('Curvature [1/m$s^2$]', fontsize = 35)
 plt.show()
-.
+
+"""
