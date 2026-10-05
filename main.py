@@ -7,7 +7,7 @@ from utilities import *
 files_loc = "C:/Users/its/Documents/racing/data_pkl"
 all_files = os.listdir(files_loc)
 
-fs = 240
+fs = 959
 g = 9.81
 normlen = 10001
 speed_threshold = 20
@@ -18,7 +18,7 @@ edges_bh = pd.read_pickle("edges_brandshatch.pkl")
 df_turns = pd.read_pickle("df_turns.pkl")
 dfallsubj = pd.read_pickle("df_allpoints.pkl")
 
-id = 227 #227 beginner
+id = 959 #227 beginner
 overwrite = False
 tracks = {}
 
@@ -80,9 +80,9 @@ for file in files:
     df_real = df_real.sort_values(["lap", "turn", "quantity"]).reset_index(drop = True)
     points = df[["x", "z"]].iloc[df_real.value.to_numpy()]
     _, idx = cfg['track'].tree.query(points)
-    df_real['midline_value'] = idx
+    df_real['midline_value'] = idx/100
 
-    approved = input(f"{file}: data quality satisfactory? y/n: ")
+    #approved = input(f"{file}: data quality satisfactory? y/n: ")
 
     #if approved != "y":
         #break
@@ -159,23 +159,23 @@ for lap in df.lap.unique():
 plt.show()
 
 """
-"""
+
 
 # figure with curvature example
 
-data = df[df.lap == 1]
+data = df[df.lap == 6]
 fig, ax1 = plt.subplots()
-ax1.plot(data.perc_space, data.curv2, label='Car curvature "acceleration"', linewidth = 2.5)
+ax1.plot(data.perc_space, data.curvature, label='Car curvature', linewidth = 2.5)
 #ax2 = ax1.twinx()
 #ax2.plot(data.perc_space, data.curv2, label='Car curvature "acceleration"', color = 'k')
-x_values = [7.5,20, 25, 36, 42,49, 57,68, 65,85]
-for x_val in x_values:
-    ax1.axvline(x_val, linestyle='--' if x_val % 2 == 0 else '-', color='grey', label='Turn start' if x_val == x_values[0] else ('Turn end' if x_val == x_values[1] else None), linewidth = 2.5)
+x_values = [7.5, 20, 25, 36, 42, 49, 57,65, 68,85]
+for i, x_val in enumerate(x_values):
+    ax1.axvline(x_val, linestyle='-' if i % 2 == 0 else '--', color='grey', label='Turn start' if i == 0 else ('Turn end' if i == 1 else None), linewidth=2.5)
+
 ax1.legend(fontsize = 30)
 plt.tick_params(axis='both', labelsize=25)
-plt.title('Example of car curvature "acceleration" in a driven lap', fontsize = 40)
+plt.title('Example of car curvature in a driven lap', fontsize = 40)
 plt.xlabel('Lap completion [%]', fontsize = 35)
 plt.ylabel('Curvature [1/m$s^2$]', fontsize = 35)
 plt.show()
 
-"""

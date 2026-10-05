@@ -9,7 +9,6 @@ from scipy.signal import butter, filtfilt
 
 fs = 240
 #####################################################################
-"""
 # get track edges
 #df = pd.DataFrame(columns = ['track', 'edge', 'perc_space', 'x', 'y', 'z'])
 #df.to_pickle('edges_ideal_pkl/df_all_edges.pkl')
@@ -63,7 +62,7 @@ else:
 
 
 dfall.to_pickle("edges_ideal_pkl/df_all_edges.pkl")
-"""
+
 #####################################################################
 # get ideal lap
 #dfid = pd.DataFrame(columns = ['track', 'perc_time', 'perc_space', 'x', 'y', 'z', 'curvature']) # solo 1 volta
@@ -191,7 +190,7 @@ df['end'] = df.end.astype(float)
 df.to_pickle('df_turns.pkl')
 """
 
-track_name = 'brandshatch'
+track_name = 'okayama'
 edges = pd.read_pickle('edges_ideal_pkl/df_all_edges.pkl')
 df_id = pd.read_pickle('edges_ideal_pkl/df_all_ideal.pkl')
 
@@ -205,7 +204,7 @@ for edge in ['outer', 'inner']:
 plt.plot(df_id.x[df_id.track == track_name], df_id.z[df_id.track == track_name])
 plt.xlabel('X coordinate', fontsize = 35)
 plt.ylabel('Z coordinate', fontsize = 35)
-plt.title(track_name, fontsize = 45)
+plt.title('Okayama Piper', fontsize = 45)
 
 track = edges[edges.track == track_name]
 
@@ -216,7 +215,7 @@ for edge in ['outer', 'inner']:
     data_10 = data[data.perc_space % 10 == 0]
     plt.plot(data_10.x, data_10.z, 'o', markersize=10, color='black', label='10% track length' if edge == 'inner' else None)
     data_0 = data[data.perc_space == 0]
-    plt.plot(data_0.x, data_0.z, 'o', markersize=10, color='red', label = 'Lap start' if edge == 'inner' else None)
+    plt.plot(data_0.x, data_0.z, 'o', markersize=10, color='red', label = 'Lap start / end' if edge == 'inner' else None)
 
 
 

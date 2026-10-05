@@ -375,12 +375,13 @@ def perc_completion_norm(data,normlen,quantities,speed_threshold,track,fs):
         if speed.min()<speed_threshold: reasons.append("Speed threshold violated")
         if max_off> 2*fs: reasons.append("Went off track longer than 1s")
 
+        """
         plt.figure()
         plt.plot(x,z)
         plt.plot(track.inner[:,0],track.inner[:,1])
         plt.plot(track.outer[:,0],track.outer[:,1])
         plt.show()
-
+        """
         if reasons:
             print(f"Lap {lap} was discarded due to: {'; '.join(reasons)}")
             continue
@@ -498,22 +499,29 @@ def entry_apex_clip_exit(data, cfg, nturns, fs):
 
         matplotlib.use('TkAgg')
         plt.figure()
-        plt.title('Lap: ' + str(lap))
+        plt.title('Representative lap from Brands Hatch Indy', fontsize = 40)
         plt.plot(datalap.x, datalap.z, color = 'red')
         clip_lap = [x for x in clip_list if datalap.index[0] <= x <= datalap.index[-1]]
         exit_lap = [x for x in exit_list if datalap.index[0] <= x <= datalap.index[-1]]
         entry_lap = [x for x in entry_list if datalap.index[0] <= x <= datalap.index[-1]]
         apex_lap = [x for x in apex_list if datalap.index[0] <= x <= datalap.index[-1]]
 
-        for apex, clip, exit, entry in zip(apex_lap, clip_lap, exit_lap, entry_lap):
+        for i, (apex, clip, exit, entry) in enumerate(zip(apex_lap, clip_lap, exit_lap, entry_lap)):
             plt.plot(cfg['track'].inner[:,0], cfg['track'].inner[:,1], color = 'black')
             plt.plot(cfg['track'].outer_mapped[:,0], cfg['track'].outer_mapped[:,1], color = 'black')
-            plt.plot(datalap.x[clip], datalap.z[clip], marker='o', color='k', markersize=8, label = 'clip')
-            plt.plot(datalap.x[exit], datalap.z[exit], marker='o', color='r', markersize=8, label = 'exit')
-            plt.plot(datalap.x[entry], datalap.z[entry], marker='o', color='g', markersize=8, label = 'entry')
-            plt.plot(datalap.x[apex], datalap.z[apex], marker='o', color='orange', markersize=8, label = 'apex')
+            plt.plot(datalap.x[clip], datalap.z[clip], marker='o', color='k', markersize=12, label = 'clip' if i == 0 else None)
+            plt.plot(datalap.x[exit], datalap.z[exit], marker='o', color='r', markersize=12, label = 'exit'if i == 0 else None)
+            plt.plot(datalap.x[entry], datalap.z[entry], marker='o', color='g', markersize=12, label = 'entry'if i == 0 else None)
+            plt.plot(datalap.x[apex], datalap.z[apex], marker='o', color='orange', markersize=12, label = 'max curv'if i == 0 else None)
 
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        plt.legend(fontsize=20)
+
+        plt.xlabel('X coordinate', fontsize = 30)
+        plt.ylabel('Z coordinate', fontsize=30)
         plt.show()
+
 
         lap_list.extend([lap] * nturns)
         turn_list.extend(np.arange(nturns) + 1)
