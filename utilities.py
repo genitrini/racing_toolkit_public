@@ -1,14 +1,13 @@
 import pandas as pd
 import numpy as np
-np.set_printoptions(legacy = '1.25')
 import matplotlib
-matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
-from matplotlib.colors import Normalize
-from matplotlib.collections import LineCollection
 from scipy.signal import butter, filtfilt, find_peaks
 from scipy.spatial import cKDTree
-from numpy.lib.stride_tricks import  sliding_window_view
+from numpy.lib.stride_tricks import sliding_window_view
+
+np.set_printoptions(legacy = '1.25')
+matplotlib.use('TkAgg')
 def rename_cols_and_filter(df, fs):
     new_df = df.rename(columns = {
         "session": "session",
@@ -46,28 +45,26 @@ def rename_cols_and_filter(df, fs):
         new_df.loc[new_df.lapcount == lap, 'timelap_s'] = (
                 new_df['time_abs'][new_df.lapcount == lap] - new_df['time_abs'][new_df.lapcount == lap].iloc[0])
 
-
-
     return  new_df
 
 def compute_curvature(data, fs):
     curv_list, curv1_list, curv2_list = [], [], []
     b, a = butter(4, 7 / (0.5 * fs), btype='low', analog=False)
 
-    p = data.timelap_s.values #data.perc.values
+    p = data.timelap_s.values # data time points
     x = data.x.values  # get x
     z = data.z.values  # get z
 
     x_filt = filtfilt(b, a, x)
     z_filt = filtfilt(b, a, z)
 
-    dx_dp = np.gradient(x_filt, p)
+    dx_dp = np.gradient(x_filt, p) # computing varoious derivatives
     dz_dp = np.gradient(z_filt, p)
     d2x_dp2 = np.gradient(dx_dp, p)
     d2z_dp2 = np.gradient(dz_dp, p)
     curvature = (dx_dp * d2z_dp2 - dz_dp * d2x_dp2) / (dx_dp ** 2 + dz_dp ** 2) ** 1.5  # larger values = sharper turn
 
-    b, a = butter(4, 2 / (0.5 * fs), btype='low', analog=False) # 0.5 Hz for slow driving ideal lap
+    b, a = butter(4, 2 / (0.5 * fs), btype='low', analog=False) # filetering driving curvature at 4 HZ (i.e. wheel oscillating max 4 times / s
     curv_smooth = filtfilt(b, a, curvature)
     curv1 = np.gradient(curv_smooth, p)
     curv1_smooth = filtfilt(b, a, curv1)
@@ -78,56 +75,25 @@ def compute_curvature(data, fs):
     curv1_list.extend(curv1_smooth)
     curv2_list.extend(curv2_smooth)
     return curv_list, curv1_list, curv2_list
-"""
-def find_exit(data, curv_threshold, frames_threshold, apex_abs, clip_abs, range_end):
 
-    window_start = apex_abs if apex_abs > clip_abs else clip_abs
-    window_end = int(data.index[0] + (range_end * 100))
-    curv_max = data.curvature.loc[apex_abs]
-    lapafter = data.curvature.loc[window_start : window_end] # take an entire lap after detecting window_start
-    lapdelta = np.sign(abs(lapafter) - abs(curv_threshold * curv_max)) #1st sample is apex by def
-    signchange = np.insert(np.where(np.diff(lapdelta) != 0)[0], 0,0) # odd index I pass from above to below
-
-    if len(signchange) % 2 == 0:
-        signchange = np.append(signchange, len(lapafter))
-
-    minus = np.array([signchange[i+1] - signchange[i] for i in range(1, len(signchange)-1, 2)])
-
-
-    if any(x > frames_threshold for x in minus):
-        exit_abs = window_start + signchange[np.where(minus >= frames_threshold)[0][0] * 2 + 1] + frames_threshold
-    else: #assuming signchange has an odd number of elemets
-        exit_abs = window_end
-
-    return exit_abs
-"""
 
 def find_exit(data, cfg, apex_lap, clip_lap, entry_lap, turn, fs):
-    post = cfg['turns'].loc[cfg['turns'].turn == turn, 'post'].iloc[0]
+    post = cfg['turns'].loc[cfg['turns'].turn == turn, 'post'].iloc[0] # 'post' can be 's' if corner followed by a straight or 't' if followed by another turn
 
     match post:
         case 's':
 
             window_start = data.loc[max(apex_lap[turn -1], clip_lap[turn - 1]), 'perc_space']
             window_end = cfg['turns'].loc[cfg['turns'].turn == turn, 'end'].iloc[0]
-            mask_window = ((data.perc_space >= window_start) & (data.perc_space <= window_end))
+            mask_window = ((data.perc_space >= window_start) & (data.perc_space <= window_end)) # here and line below selecting data in initial window
             dataturn = data.loc[mask_window]
-            post = cfg['turns'].loc[cfg['turns'].turn == turn, 'post'].iloc[0]
             idx = dataturn.index
-            # brake = dataturn['brake'].to_numpy()
-            gas = dataturn['gas'].to_numpy()
-            curv2 = dataturn['curv2'].to_numpy()
-
-            direction = 'R' if data.loc[apex_lap[turn - 1], 'curvature'] <0 else 'L'
-            if direction == 'L': # I want peak in the opposite direction of curvature --> unwind! positive peaks if unwind from right turns and vv
+            gas = dataturn['gas'].to_numpy() # data from throttle pedal
+            curv2 = dataturn['curv2'].to_numpy() # data from curvature
+            direction = 'R' if data.loc[apex_lap[turn - 1], 'curvature'] <0 else 'L' # right turns yield negative values and v.v.
+            if direction == 'L': # I want peak in the opposite direction of curvature --> unwind! positive peaks if unwind from right turns and v.v.
                 curv2 *= -1
 
-            # compute first peak in curv 2 --> unwind
-            """
-            peaks, _ = find_peaks(curv2)
-            peak_idx = idx[peaks]
-            unwind_idx = peak_idx[0]
-            """
             # compute where I have full gas
             mask = gas > 0.75 # how much
             window = int(1 * fs) # how long
@@ -135,18 +101,12 @@ def find_exit(data, cfg, apex_lap, clip_lap, entry_lap, turn, fs):
             windows = sliding_window_view(mask, window)
             gas_where = np.where(windows.sum(axis = 1) == window)[0]
             if len(gas_where) > 0:
-                gas_idx = idx[gas_where[0]]  #if len(gas_where) > 0 else unwind_idx + 1
-                #detect = 'unwind' if unwind_idx < gas_idx else 'gas'
-                detect = 'gas'
-                #return min(unwind_idx, gas_idx), detect
+                gas_idx = idx[gas_where[0]]
+                detect = 'gas' # detection criteria
                 return gas_idx, detect
 
-            window_end = cfg['turns'].loc[cfg['turns'].turn == turn, 'end'].iloc[0]
-            mask_window = ((data.perc_space >= window_start) & (data.perc_space <= window_end))
-            dataturn = data.loc[mask_window]
-
-            curv_max = data.loc[apex_lap[turn - 1], 'curvature']
-            threshold = abs(cfg['curv_threshold'] * curv_max)
+            curv_max = data.loc[apex_lap[turn - 1], 'curvature'] # find apex (max curvature in the paper)
+            threshold = abs(cfg['curv_threshold'] * curv_max) # set quantitative threshold based on max curv value
             lappre = dataturn['curvature'].to_numpy()
             mask = np.abs(lappre) > threshold
 
@@ -171,20 +131,18 @@ def find_exit(data, cfg, apex_lap, clip_lap, entry_lap, turn, fs):
 
 
         case 't':
-            window_start = data.loc[max(apex_lap[turn - 1], clip_lap[turn - 1]), 'perc_space']
-            window_end = data.loc[entry_lap[turn] + 1, 'perc_space'] # assume that last turn of a lap is followed by a straight
+            window_start = data.loc[max(apex_lap[turn - 1], clip_lap[turn - 1]), 'perc_space'] # select start and end of initial window
+            window_end = data.loc[entry_lap[turn] + 1, 'perc_space']
             mask_window = ((data.perc_space >= window_start) & (data.perc_space <= window_end))
             dataturn = data.loc[mask_window]
             idx = dataturn.index
-            # brake = dataturn['brake'].to_numpy()
-            gas = dataturn['gas'].to_numpy()
-            curv2 = dataturn['curv2'].to_numpy()
+            curv2 = dataturn['curv2'].to_numpy() # 2nd curvature derivative
             curv = dataturn['curvature'].to_numpy()
             zero_crossing = np.where(np.diff(np.signbit(curv)))[0][-1]
 
             direction = 'R' if data.loc[apex_lap[turn - 1], 'curvature'] < 0 else 'L'
             if direction == 'L':  # I want peak in the opposite direction of curvature --> unwind!
-                curv2 *= -1
+                curv2 *= -1 # finding valleys = find peaks of reversed time series!
 
             # compute first peak in curv 2 --> unwind
             peaks, _ = find_peaks(curv2)
@@ -230,7 +188,7 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
     pre = cfg['turns'].loc[cfg['turns'].turn == turn, 'pre'].iloc[0]
     match pre:
         case 's':
-            window_start = cfg['turns'].loc[cfg['turns'].turn == turn, 'start'].iloc[0]
+            window_start = cfg['turns'].loc[cfg['turns'].turn == turn, 'start'].iloc[0] # start and end of initial search window
             window_end = data.loc[min(apex_lap[turn - 1], clip_lap[turn - 1]), 'perc_space']
             mask_window = ((data.perc_space >= window_start) & (data.perc_space <= window_end))
             dataturn = data.loc[mask_window]
@@ -239,31 +197,31 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
                 return window_start
 
             idx = dataturn.index
-            brake = dataturn['brake'].to_numpy()
-            gas = dataturn['gas'].to_numpy()
-            curv2 = dataturn['curv2'].to_numpy()
+            brake = dataturn['brake'].to_numpy() # brake pedal data
+            gas = dataturn['gas'].to_numpy() # gas pedal data
+            curv2 = dataturn['curv2'].to_numpy() # 2nd derivative of curvature data
 
             direction = 'R' if data.loc[apex_lap[turn - 1], 'curvature'] < 0 else 'L'
             if direction == 'R':  # I want peak in the direction of curvature --> wind! positive peaks if wind towards left
                 curv2 *= -1
 
-            if np.any(brake != 0): # brake present
+            if np.any(brake != 0): # if brake present
 
                 brake_start = idx[np.argmax(brake > 0)]
                 peaks, _ = find_peaks(curv2)
                 peak_idx = idx[peaks]
                 valid = peak_idx[peak_idx > brake_start]
-                detect = 'brake_peak'
-                return valid[0] if len(valid) else brake_start, detect
+                detect = 'brake_peak' if len(valid) else 'break_start' # if there are no peaks in curv2 change name of detection criteria
+                return valid[0] if len(valid) else brake_start, detect # if no peaks, entry = brake start
 
-            if np.any(gas == 0): # gas == 0
+            if np.any(gas == 0): # if gas pedal was released
 
                 throttle_off = idx[np.where(gas == 0)[0][0]]
                 peaks, _ = find_peaks(curv2)
                 peak_idx = idx[peaks]
                 valid = peak_idx[peak_idx > throttle_off]
-                detect = 'gas_0_peak'
-                return valid[0] if len(valid) else idx[0], detect
+                detect = 'gas_0_peak' if len(valid) else 'throttle_off' # if there are no peaks in curv2 change name of detection criteria
+                return valid[0] if len(valid) else throttle_off, detect  # if no peaks, entry = gas off
 
             curv_max = data.loc[apex_lap[turn - 1], 'curvature']
             threshold = abs(cfg['curv_threshold'] * curv_max)
@@ -291,7 +249,7 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
 
         case 't':
 
-            window_start = cfg['turns'].loc[cfg['turns'].turn == turn, 'start'].iloc[0] - 3 # start scanning 3% before turn range
+            window_start = cfg['turns'].loc[cfg['turns'].turn == turn, 'start'].iloc[0] - 3 # start scanning 3% before turn range (found empirically, related to the fact that the selection of turn range is subjective)
             window_end = data.loc[apex_lap[turn - 1], 'perc_space']
             mask_window = ((data.perc_space >= window_start) & (data.perc_space <= window_end))
             dataturn = data.loc[mask_window]
@@ -309,12 +267,7 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
             valid = peaks[peaks > zero_crossing]
             valid = idx[valid]
             detect = 'zero_crossing_peak'
-            """
-            plt.figure()
-            plt.plot(data.curvature)
-            plt.plot(dataturn.curvature)
-            plt.show()
-            """
+
 
             if len(valid): return valid[0], detect
             window_start = data.loc[idx[zero_crossing], 'perc_space']  # start scanning at zero_crossing
@@ -347,10 +300,10 @@ def find_entry(data, cfg, apex_lap, clip_lap, turn):
 
 
 def perc_completion_norm(data,normlen,quantities,speed_threshold,track,fs):
-    percpoints=np.linspace(0,1,normlen)
+    percpoints=np.linspace(0,1,normlen) # 10 000 points equally spaced between 0 and 1
     lists={q:[] for q in quantities}
     lists["perc_time"],lists["perc_space"],lists["lap"]=[],[],[]
-    b,a=butter(4,2/(0.5*fs),btype="low",analog=False)
+    b,a=butter(4,2/(0.5*fs),btype="low",analog=False) # set low pass filter at 4 Hz
 
     for lap,datalap in data.groupby("lapcount",sort=False):
 
@@ -360,9 +313,9 @@ def perc_completion_norm(data,normlen,quantities,speed_threshold,track,fs):
         speed=datalap["speed_kph"].to_numpy()
         timelap=datalap["timelap_s"].to_numpy()
 
-        off_track,_=track.query(np.column_stack((x,z)))
+        off_track,_=track.query(np.column_stack((x,z))) # based on xz coordiantes, returns array of true/false
 
-        d=np.diff(np.r_[0,off_track.astype(np.int8),0])
+        d=np.diff(np.r_[0,off_track.astype(np.int8),0]) # checks when car transitions from on track to off track
         starts=np.where(d==1)[0]
         ends=np.where(d==-1)[0]
         max_off=0 if len(ends)==0 else np.max(ends-starts)
@@ -375,18 +328,13 @@ def perc_completion_norm(data,normlen,quantities,speed_threshold,track,fs):
         if speed.min()<speed_threshold: reasons.append("Speed threshold violated")
         if max_off> 2*fs: reasons.append("Went off track longer than 1s")
 
-        """
-        plt.figure()
-        plt.plot(x,z)
-        plt.plot(track.inner[:,0],track.inner[:,1])
-        plt.plot(track.outer[:,0],track.outer[:,1])
-        plt.show()
-        """
-        if reasons:
+
+        if reasons: # if any exclusion criteria is met, pass to the next lap
             print(f"Lap {lap} was discarded due to: {'; '.join(reasons)}")
             continue
 
-        datalap["curvature"],datalap["curv1"],datalap["curv2"]=compute_curvature(datalap,fs)
+        # if this line is reached, lap is good and retained
+        datalap["curvature"],datalap["curv1"],datalap["curv2"]=compute_curvature(datalap,fs) # computes car curvature
         datalap["gas1"]=np.gradient(datalap["gas"].to_numpy(),timelap)
 
         pts=np.column_stack((x,z))
@@ -408,34 +356,17 @@ def perc_completion_norm(data,normlen,quantities,speed_threshold,track,fs):
         lists["perc_space"].extend(percpoints*100)
 
     return pd.DataFrame(lists)
-def plot_exploratory(df, quantities):
 
-    x = df[quantities[0]].values
-    z = df[quantities[1]].values
-    c = df[quantities[2]].values
-
-    points = np.array([x, z]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    norm = Normalize(vmin=c.min(), vmax=c.max())
-    lc = LineCollection(segments, cmap="RdYlGn", norm=norm)
-    lc.set_array(c)
-    lc.set_linewidth(2.5)
-    fig, ax = plt.subplots()
-    ax.add_collection(lc)
-    ax.autoscale()
-
-    plt.colorbar(lc, ax=ax, label=quantities[-1])
-    plt.show()
 
 def entry_apex_clip_exit(data, cfg, nturns, fs):
 
     (lap_list, turn_list, apex_list, clip_list, exit_list, entry_list,
      detect_apex, detect_clip, detect_exit, detect_entry)  = [[] for _ in range(10)]
 
-
     for lap in data.lap.unique():
         datalap = data[data.lap == lap]
         counter = 0
+
         for turn in cfg['turns'].turn.unique():
             counter += 1
             start = float(cfg['turns'][cfg['turns'].turn == turn]['start'].values)
@@ -444,7 +375,7 @@ def entry_apex_clip_exit(data, cfg, nturns, fs):
             ### finding if left or right turn
             curv_turn = datalap[(datalap['perc_space'] >= start) & (datalap['perc_space'] < end)]
             values, counts = np.unique(np.sign(curv_turn.curvature), return_counts=True)
-            direction = 'L' if values[np.argmax(counts)] == 1 else 'R' # right turn = positive curv and v.v.
+            direction = 'L' if values[np.argmax(counts)] == 1 else 'R' # right turn = negative curv and v.v. Here I say 'if most of the time curv is negative, this was a right turn and v.v.'
 
             ### finding apex;   assuming to drive clockwise, right turns will clip the inner edge, while left turns the outer one
 
@@ -488,12 +419,6 @@ def entry_apex_clip_exit(data, cfg, nturns, fs):
             exit_turn, detect = find_exit(datalap, cfg, apex_lap, clip_lap, entry_lap, turn, fs)
             exit_list.append(exit_turn)
             detect_exit.extend([detect])
-
-
-
-
-
-
 
 
 
@@ -565,29 +490,6 @@ def perc_completion_norm_edges(data, normlen, inner_edge, outer_edge, quantities
 
 
     return pd.DataFrame(lists)
-
-def track_rotation(to_rotate, ref):
-    deltatot = []
-    thetas = np.linspace(0, 2 * np.pi, 3600)
-
-    for theta in thetas:  # rotate by 0.1 degrees
-
-        r = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
-        to_rotate_rot = (r @ to_rotate.T).T
-
-        deltatot.extend([np.sum(np.linalg.norm(to_rotate_rot - ref, axis=1) ** 2)])
-
-    theta_min = thetas[deltatot.index(min(deltatot))]
-    rmin = np.array([[np.cos(theta_min), -np.sin(theta_min)], [np.sin(theta_min), np.cos(theta_min)]])
-    to_rotate_rot = (rmin @ to_rotate.T).T
-
-    return to_rotate_rot
-
-import numpy as np
-
-from scipy.interpolate import CubicSpline
-from scipy.spatial import cKDTree
-
 
 class TrackLimits:
     def __init__(self, inner, outer, n_samples=10000):
