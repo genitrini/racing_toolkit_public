@@ -15,7 +15,7 @@ This software identifies characteristic points along a racing simulator trajecto
 ####################################################################################################################################################################################
 
 # Procedure
--Firstly, in the working directory, two subfolder should be created: one containing the .csv files to be processed and one where the .pkl files will be saved upon creation. The scripts should be located in the main working directory instead.
+- Firstly, in the working directory, two subfolder should be created: one containing the .csv files to be processed and one where the .pkl files will be saved upon creation. The scripts should be located in the main working directory instead.
 
 ## Creating file with track edges
 - To run this script the 'track_edges.csv' file is necessary.
@@ -26,7 +26,7 @@ This software identifies characteristic points along a racing simulator trajecto
 
 ## Converting telemetry data from .csv to .pkl
 
-- The first script to be used is 'data_load.py', where the location of the .csv file must be entered as a string to 'file_loc'; the participant ID number must also be entered and the script may now be run. The output will be a .pkl file with the same name as the .csv file processed saved to the previously created subfolder. The reason why only these files are converted to .pkl, whilst the 'track_edge.csv's file is not, is that the latter is just one file per circuit (containing relatively few data), and it must be run just once. Conversely, for the driving data it is plausible to have multiple files per participant, for which the .csv format may be inconvenient.
+- The first script to be used is 'data_load.py', where the location of the .csv file must be entered as a string to 'file_loc'; the participant ID number must also be entered and the script may now be run. The output will be a .pkl file with the same name as the .csv file processed saved to the previously created subfolder. The reason why only these files are converted to .pkl, whilst the 'track_edge.csv's file is not, is that the latter is just one file per circuit (containing relatively few data), and it must be run just once. Conversely, for the driving data it is plausible to have multiple files per participant, for which the .csv format may be inconvenient. Nonetheless, the user is free to edit this aspect, if needed.
 
 ## Obtaining corner points from telemetry data (entry, maximum curvature, clipping and exit)
 - When opening the 'main.py' script, it is possible to create an empty data frame which will be filled (and grown, if one needs to analyze multiple circuits) with the corner points to be computed. The data frame
