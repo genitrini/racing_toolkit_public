@@ -1,14 +1,8 @@
-
 cff-version: 1.2.0
 message: "If you use this software in your research, please cite it."
 type: software
 
-title: "
-cff-version: v1.0.0
-message: "If you use this software in your research, please cite it."
-type: software
-
-title: "From Entry to Exit: An Open-Source Toolkit for Detecting Corner Events in Race Car Telemetry "
+title: "From Entry to Exit: An Open-Source Toolkit for Detecting Corner Events in Race Car Telemetry"
 
 abstract: >-
   Python implementation of a data-driven algorithm for the
@@ -17,9 +11,12 @@ abstract: >-
   entry, turn exit, clipping point, and maximum-curvature point.
 
 authors:
-  - family-names: "GENITRINI", "ZIV"
-    given-names: "MATTEO", "GAL"
-    # orcid: "https://orcid.org/0000-0001-9718-2928", "https://orcid.org/0000-0001-5731-5896"
+  - family-names: "GENITRINI"
+    given-names: "MATTEO"
+    orcid: "https://orcid.org/0000-0001-9718-2928"
+  - family-names: "ZIV"
+    given-names: "GAL"
+    orcid: "https://orcid.org/0000-0001-5731-5896"
 
 version: 1.0.0
 date-released: "2026-10-15"
