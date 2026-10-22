@@ -329,6 +329,7 @@ def perc_completion_norm(data,normlen,quantities,speed_threshold,track,fs):
         if max_off> 2*fs: reasons.append("Went off track longer than 1s")
 
 
+
         if reasons: # if any exclusion criteria is met, pass to the next lap
             print(f"Lap {lap} was discarded due to: {'; '.join(reasons)}")
             continue

@@ -3,42 +3,39 @@ import numpy as np
 import os
 from utilities import *
 
-
 files_loc = "C:/Users/its/Documents/racing/data_pkl"
 all_files = os.listdir(files_loc)
 
-fs = 959
-g = 9.81
-normlen = 10001
-speed_threshold = 20
-quantities = ["x","y","z","speed_kph","engine_rpm","steer","acc_lat","curvature","curv1","curv2","gas","gas1","brake"]
+#################################################################################
+# EXECUTE THIS SECTION ONLY THE FIRST TIME: IT CREATES AN EMPTY DATA FRAME
 
-edges_ok = pd.read_pickle("edges_okayama.pkl")
-edges_bh = pd.read_pickle("edges_brandshatch.pkl")
-df_turns = pd.read_pickle("df_turns.pkl")
-dfallsubj = pd.read_pickle("df_allpoints.pkl")
+df = pd.DataFrame(columns = ['subject', 'level', 'track', 'session', 'block', 'lap', 'turn', 'quantity', 'value', 'detect', 'midline_value'])
+df.to_pickle('/select/your/directory/df_allpoints.pkl')
+#################################################################################
 
-id = 959 #227 beginner
-overwrite = False
+fs = 240 # sampling rate
+g = 9.81 # gravity acc
+normlen = 10001 # desired number of data points for normalization
+speed_threshold = 20 # in kph
+quantities = ["x","y","z","speed_kph","engine_rpm","steer","acc_vert","curvature","curv1","curv2","gas","gas1","brake"]
+
+edges_df = pd.read_pickle("C:/Users/its/Documents/racing/edges_ideal_pkl/df_all_edges.pkl") # load data frame with tracks'  edges
+edges_bh = edges_df[edges_df.track == 'brandshatch'].reset_index(drop = True) # specify edges of the tacks one is interested in
+edges_ok = edges_df[edges_df.track == 'okayama'].reset_index(drop = True)
+df_turns = pd.read_pickle("df_turns.pkl") # load data frame with turn information
+dfallsubj = pd.read_pickle("df_allpoints.pkl") # upload df where the corner metrics will be saved
+
+id = 959 # participant's ID
+overwrite = False # if for any reason it is necessary to re-compute data of one subject only while leaving all the rest unchanged
 tracks = {}
 
 for track_name, edges in {"okayama": edges_ok, "brandshatch": edges_bh}.items():
-    inner = edges.loc[edges.lapcount == 3, ["x", "z"]].to_numpy(copy=True)
-    outer = edges.loc[edges.lapcount == 1, ["x", "z"]].to_numpy(copy=True)
+    inner = edges.loc[edges.edge == 'inner', ["x", "z"]].to_numpy(copy=True)
+    outer = edges.loc[edges.edge == 'outer', ["x", "z"]].to_numpy(copy=True)
     reverse_z = track_name == "brandshatch"
     reverse_x = track_name == "okayama"
 
-    if reverse_z:
-        inner[:, 1] *= -1
-        outer[:, 1] *= -1
-
-
-    if reverse_x:
-        inner[:, 0] *= -1
-        outer[:, 0] *= -1
-
-
-    tracks[track_name] = {
+    tracks[track_name] = { #creating a support structure to speed up the code
         "track": TrackLimits(inner, outer),
         "inner": inner,
         "outer": outer,
@@ -57,9 +54,6 @@ for file in files:
     level = parts[2]
     track_name = "brandshatch" if parts[3] == "easy" else "okayama"
 
-    #if track_name != 'okayama':
-        #continue
-
     session = int(parts[5])
     block = int(parts[7])
     cfg = tracks[track_name]
@@ -69,33 +63,25 @@ for file in files:
     if cfg["reverse_z"]:
         data.z *= -1
         nturns = 5
+
     if cfg["reverse_x"]:
         data.x *= -1
         nturns = 7
 
-
-    data = data[data.pit != 1].reset_index(drop=True)
-    df = perc_completion_norm(data, normlen, quantities, speed_threshold, cfg["track"], fs)
-    df_real = entry_apex_clip_exit(df, cfg, nturns, fs)
+    data = data[data.pit != 1].reset_index(drop=True) # exclude laps with pit stops
+    df = perc_completion_norm(data, normlen, quantities, speed_threshold, cfg["track"], fs) # exclude laps based on criteria listed in the paper and mormalized retained laps to 10000 data points
+    df_real = entry_apex_clip_exit(df, cfg, nturns, fs) # computes corner metrics
     df_real = df_real.sort_values(["lap", "turn", "quantity"]).reset_index(drop = True)
     points = df[["x", "z"]].iloc[df_real.value.to_numpy()]
-    _, idx = cfg['track'].tree.query(points)
+    _, idx = cfg['track'].tree.query(points) # compute closest mid line value point to the corner metrics computed above ( all laps have different distance: midline value is a common reference that never changes)
     df_real['midline_value'] = idx/100
-
-    #approved = input(f"{file}: data quality satisfactory? y/n: ")
-
-    #if approved != "y":
-        #break
 
     df_real.insert(0, "subject", id)
     df_real.insert(1, "level", level)
     df_real.insert(2, "track", track_name)
     df_real.insert(3, "session", session)
     df_real.insert(4, "block", block)
-
-    dfs.append(df_real)
-
-
+    dfs.append(df_real)  # append data frame just created
 
 if dfs:
 
@@ -107,75 +93,6 @@ if dfs:
     else:
         dfallsubj = pd.concat([dfallsubj, dfsubj], ignore_index=True)
 
-    dfallsubj.to_pickle("df_allpoints.pkl")
-######################################################
-####### plots
+    dfallsubj.to_pickle("df_allpoints.pkl") # saves to pkl
 
-"""
-df_real = df_real.sort_values(by=['lap', 'turn', 'quantity']).reset_index(drop = True)
-df_ideal = df_ideal.sort_values(by=['lap', 'turn', 'quantity']).reset_index(drop = True)
-dfdelta = pd.DataFrame(columns = ['lap', 'turn', 'quantity', 'perc'])
-
-for lap in df_real.lap.unique():
-    dflap = df_real[df_real.lap == lap].reset_index(drop = True)
-    dfcopy = dflap.copy()
-    dfcopy['perc'] = dflap['perc'] - df_ideal['perc']
-    dfdelta = pd.concat([dfdelta, dfcopy], axis = 0)
-
-plt.figure()
-sns.boxplot(data = dfdelta, x = 'turn', y = 'perc', hue = 'quantity')
-plt.show()
-
-"""
-
-
-
-
-"""
-for lap in df.lap.unique():
-    plt.figure()
-    plt.plot(df['curvature'][df.lap ==lap])
-    #plt.figure()
-    #plt.plot(df['x'][df.lap ==lap], df['z'][df.lap ==lap])
-plt.show()
-"""
-
-
-"""
-for lap in df.lap.unique():
-
-    fig, ax1 = plt.subplots()
-    ax1.plot(df['curvature'][df.lap == lap])
-    ax1.plot(df['curv1'][df.lap == lap])
-    ax2 = ax1.twinx()
-    ax2.plot(df['curv2'][df.lap == lap], color = 'green')
-plt.show()
-
-for lap in df.lap.unique():
-    plt.figure()
-    plt.plot(df.x[df.lap == lap], df.z[df.lap == lap])
-    plt.plot(track.inner[:, 0], track.inner[:, 1])
-    plt.plot(track.outer[:, 0], track.outer[:, 1])
-plt.show()
-
-"""
-
-
-# figure with curvature example
-
-data = df[df.lap == 6]
-fig, ax1 = plt.subplots()
-ax1.plot(data.perc_space, data.curvature, label='Car curvature', linewidth = 2.5)
-#ax2 = ax1.twinx()
-#ax2.plot(data.perc_space, data.curv2, label='Car curvature "acceleration"', color = 'k')
-x_values = [7.5, 20, 25, 36, 42, 49, 57,65, 68,85]
-for i, x_val in enumerate(x_values):
-    ax1.axvline(x_val, linestyle='-' if i % 2 == 0 else '--', color='grey', label='Turn start' if i == 0 else ('Turn end' if i == 1 else None), linewidth=2.5)
-
-ax1.legend(fontsize = 30)
-plt.tick_params(axis='both', labelsize=25)
-plt.title('Example of car curvature in a driven lap', fontsize = 40)
-plt.xlabel('Lap completion [%]', fontsize = 35)
-plt.ylabel('Curvature [1/m$s^2$]', fontsize = 35)
-plt.show()
 
