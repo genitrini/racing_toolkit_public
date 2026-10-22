@@ -9,8 +9,8 @@ all_files = os.listdir(files_loc)
 #################################################################################
 # EXECUTE THIS SECTION ONLY THE FIRST TIME: IT CREATES AN EMPTY DATA FRAME
 
-df = pd.DataFrame(columns = ['subject', 'level', 'track', 'session', 'block', 'lap', 'turn', 'quantity', 'value', 'detect', 'midline_value'])
-df.to_pickle('/select/your/directory/df_allpoints.pkl')
+#df = pd.DataFrame(columns = ['subject', 'level', 'track', 'session', 'block', 'lap', 'turn', 'quantity', 'value', 'detect', 'midline_value'])
+#df.to_pickle('/select/your/directory/df_allpoints.pkl')
 #################################################################################
 
 fs = 240 # sampling rate

@@ -49,7 +49,7 @@ def rename_cols_and_filter(df, fs):
 
 def compute_curvature(data, fs):
     curv_list, curv1_list, curv2_list = [], [], []
-    b, a = butter(4, 7 / (0.5 * fs), btype='low', analog=False)
+    b, a = butter(4, 7 / (0.5 * fs), btype='low', analog=False) # filtering data at 7 Hz (fould empirically)
 
     p = data.timelap_s.values # data time points
     x = data.x.values  # get x
@@ -64,7 +64,7 @@ def compute_curvature(data, fs):
     d2z_dp2 = np.gradient(dz_dp, p)
     curvature = (dx_dp * d2z_dp2 - dz_dp * d2x_dp2) / (dx_dp ** 2 + dz_dp ** 2) ** 1.5  # larger values = sharper turn
 
-    b, a = butter(4, 2 / (0.5 * fs), btype='low', analog=False) # filetering driving curvature at 4 HZ (i.e. wheel oscillating max 4 times / s
+    b, a = butter(4, 2 / (0.5 * fs), btype='low', analog=False) # filetering driving curvature at 4 HZ (i.e. wheel oscillating max 4 times / s)
     curv_smooth = filtfilt(b, a, curvature)
     curv1 = np.gradient(curv_smooth, p)
     curv1_smooth = filtfilt(b, a, curv1)
@@ -465,7 +465,7 @@ def entry_apex_clip_exit(data, cfg, nturns, fs):
 
 
 
-def perc_completion_norm_edges(data, normlen, inner_edge, outer_edge, quantities):
+def perc_completion_norm_edges(data, normlen, inner_edge, outer_edge, quantities): # this function normalizes to 10000 data points the edges of the tracks
 
     percpoints = np.linspace(0, 1, normlen)
     lists = {q: [] for q in quantities}
@@ -492,7 +492,7 @@ def perc_completion_norm_edges(data, normlen, inner_edge, outer_edge, quantities
 
     return pd.DataFrame(lists)
 
-class TrackLimits:
+class TrackLimits: # this is a support structure to spped up the code
     def __init__(self, inner, outer, n_samples=10000):
         self.n_samples=n_samples
         self.inner=self._resample(inner)
