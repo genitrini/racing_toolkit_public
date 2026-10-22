@@ -28,7 +28,7 @@ reverse_z = reverse_x = 0 # 1 IF ANY AXIS SHOULD BE REVERSED: SOMETIMES TELEMETR
 if track_name == 'brandshatch': # FOR EXAMPLE, IN OUR DATA BRANDS HATCH INDY WAS  FLIPPED WRT THE Z COORDINATE
     reverse_z = 1
 else:
-    reverse_x = 1
+    reverse_x = 1 # OKAYAMA IS FLIPPED WRT THE Z COORDINATE INSTEAD
 
 quantities = ['x', 'y', 'z']
 
@@ -62,60 +62,49 @@ if overwrite == 0: # IF NECESSARY OVERWRITE DATA FROM A GIVEN CIRCUIT, IF ANY ER
 else:
     dfall.loc[dfall.track == track_name, :] = df.values
 
-
 dfall.to_pickle("/select/your/directory/df_all_edges.pkl") #SAVE DF WITH TRACK EDGES
 
+#################################################################################
+#################################################################################
+# EXECUTE THESE 2 LINES ONLY THE FIRST TIME TO CREATE A NEW DATA FRAME
+# create (and grow) df with locations of turns in each track
+df = pd.DataFrame(columns = ['track', 'turn', 'start', 'end', 'pre', 'post'])
+df.to_pickle('df_turns.pkl')
+#################################################################################
+#################################################################################
+df = pd.read_pickle('df_turns.pkl')
 
+# Brandshatch
+track_name = 'brandshatch'
+turns_range = [[7.5,20], [25, 36], [42,49], [57,68], [65,85]]
+prec = ['s', 's', 's', 's', 't']
+foll = ['s', 's', 's', 't', 's']
+counter = 0
 
+for i in np.arange(len(turns_range)):  # CREATES DATAFRAME FROM LISTS ABOVE
+    counter += 1
+    row = [track_name, counter, turns_range[i][0], turns_range[i][1], prec[i], foll[i]]
+    df.loc[len(df)] = row
 
-
-
-
-
-
-
-
-
-
-
-
+# Okayama
 track_name = 'okayama'
-edges = pd.read_pickle('edges_ideal_pkl/df_all_edges.pkl')
-df_id = pd.read_pickle('edges_ideal_pkl/df_all_ideal.pkl')
+turns_range = [[6,20], [21,31],[30, 38], [44,53], [52,63], [64,74], [74,84]] #   EACH COUPLE OF VALUES IS THE START AND END OF A GIVEN CORNER
+prec = ['s', 's', 't', 's', 't', 's', 's'] # SPECIFY IF CORNER IS PRECEDED BY A STRAIGHT OR BY ANOTHER TURN
+foll = ['s', 't', 's', 't', 's', 's', 's'] # SAME, BUT FOLLOWED INSTEAD OF PRECEDED
+counter = 0
 
+for i in np.arange(len(turns_range)): # CREATES DATA FRAME FROM LISTS ABOVE
+    counter += 1
+    row = [track_name, counter, turns_range[i][0], turns_range[i][1], prec[i], foll[i]]
+    df.loc[len(df)] = row
 
-plt.figure()
-for edge in ['outer', 'inner']:
+df['start'] = df.start.astype(float)
+df['end'] = df.end.astype(float)
 
-    plt.plot(edges.x[(edges.track == track_name) & (edges.edge == edge)],
-             edges.z[(edges.track == track_name) & (edges.edge == edge)])
-
-plt.plot(df_id.x[df_id.track == track_name], df_id.z[df_id.track == track_name])
-plt.xlabel('X coordinate', fontsize = 35)
-plt.ylabel('Z coordinate', fontsize = 35)
-plt.title('Okayama Piper', fontsize = 45)
-
-track = edges[edges.track == track_name]
-
-for edge in ['outer', 'inner']:
-    data = track[track.edge == edge]
-    data_100 = data[data.perc_space % 1 == 0]
-    plt.plot(data_100.x, data_100.z, 'o', markersize=3, color='grey', label='1% track length' if edge == 'inner' else None)
-    data_10 = data[data.perc_space % 10 == 0]
-    plt.plot(data_10.x, data_10.z, 'o', markersize=10, color='black', label='10% track length' if edge == 'inner' else None)
-    data_0 = data[data.perc_space == 0]
-    plt.plot(data_0.x, data_0.z, 'o', markersize=10, color='red', label = 'Lap start / end' if edge == 'inner' else None)
+df.to_pickle('df_turns.pkl') # SAVES DATA FRAME
 
 
 
-plt.tick_params(axis='both', labelsize=25)
-plt.legend(fontsize=30)
-plt.show()
 
 
-for lap in df.lap.unique():
-    plt.figure()
-    plt.plot(df['curvature'][df.lap ==lap])
-    #plt.figure()
-    #plt.plot(df['x'][df.lap ==lap], df['z'][df.lap ==lap])
-plt.show()
+
