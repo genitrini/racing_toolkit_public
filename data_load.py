@@ -3,15 +3,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 
-files_loc = "E:/backups matteo/06_2026_ufficio/Documents/projects/LSU/racing/data_csv" # SET CSV FILES LOCATION
-os.chdir("E:/backups matteo/06_2026_ufficio/Documents/projects/LSU/racing") # SET CURRENT WORKING LOCATION, IF NEEDED
+files_loc = "select/your/files/directory/data_csv" # SET CSV FILES LOCATION
+os.chdir("select/your/working/directory") # SET CURRENT WORKING LOCATION, IF NEEDED
 all_files = os.listdir(files_loc)
 
 cols_to_keep = ["time",  "lapCount", "lapTime", "carPositionNormalized", "carCoordinatesX", "carCoordinatesY", "carCoordinatesZ",  
                 "speedKmh", "engineRPM", "gear", "gas", "brake", "steer", "isAbsInAction", "isTcInAction", "isInPit",
                 "accGVertical", "accGHorizontal", "accGFrontal"] # TELEMETRY DATA HAE APPROX. 90 COLS. HERE WE SELECT THOSE TO BE RETAINED
 
-id = 227 # SUBJECT'S id
+id = 000 # SUBJECT'S id
 for file in all_files: # CONVERTS TO THE  EASIER-TO-READ PKL FORMAT
 
     parts = file.split("_")
