@@ -8,23 +8,25 @@ This software identifies characteristic points along a racing simulator trajecto
 - Python 3.10 or newer
 
 ## We provide:
-- Data sample from a driving session in .csv format
-- Data (.csv) containing 2 laps driven slowly with the tip of the car on the inner and outer edges of Brands Hatch Indy to obtain the track edges used for subsequent analysis 
-- The scripts to convert the data to .pkl (lightweight and easy-to-read in Python).
-
-####################################################################################################################################################################################
+- The script to convert the data to .pkl (lightweight and easy-to-read in Python).
+- The script to create the track edges and a data frame containing corners' invormatiom
+- The scripts to run the algorithm assuming to have created the track edges and know the location of the corners on the track
+- The script to plot the results and visually analyze them
 
 # Procedure
 - Firstly, in the working directory, two subfolder should be created: one containing the .csv files to be processed and one where the .pkl files will be saved upon creation. The scripts should be located in the main working directory instead.
 
-## Creating file with track edges
-- To run this script the 'track_edges.csv' file is necessary.
+## Creating file with track edges and a data frame with corners information
+- To run this script a 'track_edges.csv' file is necessary. This can be obtained from telemetry after driving one lap for the inner and one for the outer edge with the middle of the car on the
+  edge of the track.
   
 - When opening the 'track_edges.py' script, it is possible to create an empty data frame which will be filled (and grown, if one needs to analyze multiple circuits) with the coordinates of the track edges. In the script, it is possible specify several parameters including how many data points the edges should be normalized to, sampling rate of the collected data, which driven lap in the .csv file corresponds to the inner or outer edge, the circuit name and whether any coordinates should be reversed (sometimes the circuit may be visualized upside-down or flipped left-to-right). 
-- After prompting the file location, one may simply run the script. The output will be a data frame containing the track inner and outer edges normalized to the desired number of data points
+- After prompting the file location, one may simply run the script. The output will be a data frame containing the track inner and outer edges normalized to the desired number of data points.
+- The second part of the scripts allows the creation of a data frame with the location of the corners with respect to the track, as well as whether a given corner is preceeded/followed. This
+  information must be entered manually following the instructions provided as comments in the script
 
 
-## Converting telemetry data from .csv to .pkl
+## Converting racind telemetry data from .csv to .pkl
 
 - The first script to be used is 'data_load.py', where the location of the .csv file must be entered as a string to 'file_loc'; the participant ID number must also be entered and the script may now be run. The output will be a .pkl file with the same name as the .csv file processed saved to the previously created subfolder. The reason why only these files are converted to .pkl, whilst the 'track_edge.csv's file is not, is that the latter is just one file per circuit (containing relatively few data), and it must be run just once. Conversely, for the driving data it is plausible to have multiple files per participant, for which the .csv format may be inconvenient. Nonetheless, the user is free to edit this aspect, if needed.
 
