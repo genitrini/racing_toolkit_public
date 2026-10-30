@@ -12,7 +12,7 @@ cols_to_keep = ["time",  "lapCount", "lapTime", "carPositionNormalized", "carCoo
                 "accGVertical", "accGHorizontal", "accGFrontal"] # TELEMETRY DATA HAE APPROX. 90 COLS. HERE WE SELECT THOSE TO BE RETAINED
 
 id = 000 # SUBJECT'S id
-for file in all_files: # CONVERTS TO THE  EASIER-TO-READ PKL FORMAT
+for file in all_files: # CONVERTS TO THE  EASIER-TO-READ PKL  FORMAT
 
     parts = file.split("_")
     if int(parts[1]) != id:
