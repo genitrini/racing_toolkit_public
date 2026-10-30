@@ -38,6 +38,6 @@ This software identifies characteristic points along a racing simulator trajecto
 - The algorithm will then ask to prompt 'y' or 'n' based on whether the quality of the data is satisfactory and those should be retained (or discarded). Once the answer is entered, the algorithm will end or continue to the next file(s) if a given subject has more than one. 
 - At the end, the algorithm will save the data frame with the corner metrics for each subject, circuit, lap and corner.
 
-  ## Visualization
+## Visualization
 - The script "stats_turns.py" may be used to produce the plots presented in the article. One simply needs to specify the location of the data frame produced by the "main.py" script.
   
