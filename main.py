@@ -3,7 +3,7 @@ import numpy as np
 import os
 from utilities import *
 
-files_loc = "C:/Users/its/Documents/racing/data_pkl"
+files_loc = "select/your/directory/data_pkl" # .pkl files from data_load.py script
 all_files = os.listdir(files_loc)
 
 #################################################################################
@@ -19,7 +19,7 @@ normlen = 10001 # desired number of data points for normalization
 speed_threshold = 20 # in kph
 quantities = ["x","y","z","speed_kph","engine_rpm","steer","acc_vert","curvature","curv1","curv2","gas","gas1","brake"]
 
-edges_df = pd.read_pickle("C:/Users/its/Documents/racing/edges_ideal_pkl/df_all_edges.pkl") # load data frame with tracks'  edges
+edges_df = pd.read_pickle("select/your/directory/df_all_edges.pkl") # load data frame with tracks'  edges from track_edges.py script
 edges_bh = edges_df[edges_df.track == 'brandshatch'].reset_index(drop = True) # specify edges of the tacks one is interested in
 edges_ok = edges_df[edges_df.track == 'okayama'].reset_index(drop = True)
 df_turns = pd.read_pickle("df_turns.pkl") # load data frame with turn information

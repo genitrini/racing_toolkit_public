@@ -32,7 +32,7 @@ else:
 
 quantities = ['x', 'y', 'z']
 
-data = pd.read_csv("/select/your/directory//" + track_name + "_edges.csv") # UPLOAD .CSV DATA CONTAINING TELEMETRY FILES
+data = pd.read_csv("/select/your/directory/" + track_name + "_edges.csv") # UPLOAD .CSV DATA CONTAINING TELEMETRY FILES
 data = rename_cols_and_filter(data, fs) # CUSTOM FUNCTION TO ONLY SELECT THE NECESSARY COLUMNS
 data = data[data.lapcount.isin([1,3])] # ONLY RETAIN LAPS DRIVEN ON THE EDGES
 data.to_pickle('edges_brandshatch.pkl') # SAVE THEM TO PKL (LIGHTER THAN .CSV) SHOULD ANY FUTURE ANALYSIS BE NECESSARY
@@ -74,11 +74,11 @@ df.to_pickle('df_turns.pkl')
 #################################################################################
 df = pd.read_pickle('df_turns.pkl')
 
-# Brandshatch
+# Brandsh Hatch Indy
 track_name = 'brandshatch'
-turns_range = [[7.5,20], [25, 36], [42,49], [57,68], [65,85]]
-prec = ['s', 's', 's', 's', 't']
-foll = ['s', 's', 's', 't', 's']
+turns_range = [[7.5,20], [25, 36], [42,49], [57,68], [65,85]] # approximate location of corners  (% of lap completion)
+prec = ['s', 's', 's', 's', 't'] # "s" if preceeded  by a straight and "t" if preceeded by a turn
+foll = ['s', 's', 's', 't', 's'] # same with followed
 counter = 0
 
 for i in np.arange(len(turns_range)):  # CREATES DATAFRAME FROM LISTS ABOVE
