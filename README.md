@@ -16,7 +16,7 @@ This software identifies characteristic points along a racing simulator trajecto
 # Procedure
 - Firstly, in the working directory, two subfolder should be created: one containing the .csv files to be processed and one where the .pkl files will be saved upon creation. The scripts should be located in the main working directory instead.
 
-## Creating file with track edges and a data frame with corners information
+## Preliminary: creating file with track edges and a data frame with corners information
 - To run this script a 'track_edges.csv' file is necessary. This can be obtained from telemetry after driving one lap for the inner and one for the outer edge with the middle of the car on the
   edge of the track.
   
